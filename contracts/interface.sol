@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface ITokenWallet {
-    //此方法返回指定钱包地址中检测到的所有代币类型
+interface BSIMWallet {
+    //此方法用于返回指定钱包地址中检测到的所有代币类型
     function detectTokenTypes(address wallet) external view returns (TokenType[] memory);
     //此方法用于获取指定钱包中指定代币的余额
     function getTokenBalance(address wallet, address token) external view returns (uint256);
