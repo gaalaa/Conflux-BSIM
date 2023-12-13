@@ -1,0 +1,23 @@
+{
+  "name": "conflux-bsim",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gaalaa/Conflux-BSIM.git"
+  },
+  "author": "Gala",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gaalaa/Conflux-BSIM/issues"
+  },
+  "homepage": "https://github.com/gaalaa/Conflux-BSIM#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.2"
+  }
+}
