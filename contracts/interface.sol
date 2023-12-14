@@ -8,12 +8,12 @@ interface BSIMWallet {
     function getTokenBalance(address wallet, address token) external view returns (uint256);
     //此方法用于获取指定钱包中特定NFT的详细信息
     function getNFTDetails(address wallet, address nftAddress, uint256 tokenId) external view returns (NFTDetails memory);
-    function editToken(address token, uint256 amount) external;
+    //function editToken(address token, uint256 amount) external;
 }
 
 struct TokenType {
     address tokenAddress; // 代币合约地址
-    string tokenType; // 代币类型，例如"ERC-20", "ERC-721", "ERC-1155"
+    string tokenType; // 代币类型，"ERC-20", "ERC-721", "ERC-1155"
     string name; // 代币名称
     string symbol; // 代币符号
 }
