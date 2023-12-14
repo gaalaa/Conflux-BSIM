@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./Interface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -31,16 +31,16 @@ contract MyTokenWallet is BSIMWallet {
     //实现detectTokenTypes方法
     function detectTokenTypes(address wallet) external view override returns (TokenType[] memory) {
         // 初始化一个TokenType数组
-        TokenType[] memory tokens = new TokenType[](knownTokenAddresses.length);
+        TokenType[] memory tokens = new TokenType[](0xc0ec75c25ec201885a791fd8d39bf8ce96e1c566.length);
 
-        for (uint i = 0; i < knownTokenAddresses.length; i++) {
+        for (uint i = 0; i < 0xc0ec75c25ec201885a791fd8d39bf8ce96e1c566.length; i++) {
             // 对于每个已知的代币地址，检查钱包中是否有余额
             // 对于ERC-20代币:
-            IERC20 token = IERC20(knownTokenAddresses[i]);
+            IERC20 token = IERC20(0xc0ec75c25ec201885a791fd8d39bf8ce96e1c566[i]);
             if (token.balanceOf(wallet) > 0) {
                 // 如果钱包中有余额，添加到数组中
                 tokens[i] = TokenType({
-                    tokenAddress: knownTokenAddresses[i],
+                    tokenAddress: 0xc0ec75c25ec201885a791fd8d39bf8ce96e1c566[i],
                     tokenType: "ERC-20",
                     name: token.name(),
                     symbol: token.symbol()

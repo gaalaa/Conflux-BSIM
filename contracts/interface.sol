@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 interface BSIMWallet {
     //此方法用于返回指定钱包地址中检测到的所有代币类型
