@@ -8,7 +8,6 @@ interface BSIMWallet {
     function getTokenBalance(address wallet, address token) external view returns (uint256);
     //此方法用于获取指定钱包中特定NFT的详细信息
     function getNFTDetails(address wallet, address nftAddress, uint256 tokenId) external view returns (NFTDetails memory);
-    //function editToken(address token, uint256 amount) external;
 }
 
 struct TokenType {
