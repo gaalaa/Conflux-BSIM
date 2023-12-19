@@ -6,21 +6,11 @@ interface BSIMWallet {
     function detectTokenTypes(address wallet) external view returns (TokenType[] memory);
     //此方法用于获取指定钱包中指定代币的余额
     function getTokenBalance(address wallet, address token) external view returns (uint256);
-    //此方法用于获取指定钱包中特定NFT的详细信息
-    function getNFTDetails(address wallet, address nftAddress, uint256 tokenId) external view returns (NFTDetails memory);
 }
 
 struct TokenType {
     address tokenAddress; // 代币合约地址
-    string tokenType; // 代币类型，"ERC-20", "ERC-721", "ERC-1155"
+    string tokenType; // 代币类型，"ERC-20"
     string name; // 代币名称
     string symbol; // 代币符号
 }
-
-struct NFTDetails {
-    address nftAddress; // NFT合约地址
-    uint256 tokenId; // NFT的Token ID
-    string imageURL; // NFT的图像URL
-    string description; // NFT的描述
-}
-
