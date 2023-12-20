@@ -3,13 +3,18 @@ pragma solidity ^0.8.20;
 
 interface IWallet {
 
-    // register(add) token to user's wallet
-    function registerToken(address user, address token) external;
+    // structed other information
+    struct TokenInfo {
+        address tokenAddress;
+        uint256 balance;
+        string name;
+        string symbol;
+        uint8 decimals;
+    }
 
-    // inquire token's market price
-    function getTokenMarketPrice(address user, address token) external view returns (uint256);
+    // Get token market price
+    function getTokenMarketPrice(address token) external view returns (uint256);
 
-    // get paginated token balance
-    function getPaginatedTokenBalances(address user, uint start, uint limit) 
-    external view returns (address[] memory tokenAddresses, uint256[] memory balances);
+    // Get paginated token information
+    function getPaginatedTokenInfo(address user, uint start, uint limit) external view returns (TokenInfo[] memory tokensInfo);
 }
