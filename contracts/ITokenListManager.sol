@@ -3,27 +3,27 @@ pragma solidity ^0.8.20;
 
 interface ITokenListManager {
 
-    // add token to tokenlist
-    function addToken(address token) external;
+    // Add tokens to tokenlist(whitelist), batch supported
+    function addToken(address[] calldata tokens) external;
 
-    // remove token from tokenlist
-    function removeToken(address token) external;
+    // Remove tokens from tokenlist(whitelist), batch supported
+    function removeToken(address[] calldata tokens) external;
 
-    // add token to whitelist
-    function addTokenToWhitelist(address token) external;
+    // Add tokens to blacklist, batch supported
+    function addBlacklistedToken(address[] calldata tokens) external;
 
-    // remove token from whitelist
-    function removeTokenFromWhitelist(address token) external;
+    // Remove tokens from blacklist, batch supported
+    function removeBlacklistedToken(address[] calldata tokens) external;
 
-    // add token to blacklist
-    function addTokenToBlacklist(address token) external;
+    // Get tokens in whitelist, paging supported
+    function getWhitelistedTokens(uint256 offset, uint256 limit) external view returns (address[] memory);
 
-    // remove token from blacklist
-    function removeTokenFromBlacklist(address token) external;
+    // Get tokens in blacklist, paging supported
+    function getBlacklistedTokens(uint256 offset, uint256 limit) external view returns (address[] memory);
 
-    // search token in whitelist
-    function getWhitelistedTokens() external view returns (address[] memory);
+    // Determine if the token in whitelist
+    function isWhitelisted(address token) external view returns (bool);
 
-    // search token in blacklist
-    function getBlacklistedTokens() external view returns (address[] memory);
+    // Determine if the token in blacklist
+    function isBlacklisted(address token) external view returns (bool);
 }
