@@ -34,20 +34,4 @@ contract TokenListManager is ITokenListManager {
             blacklistedTokens[tokens[i]] = false;
         }
     }
-    // 
-    function getWhitelistedTokens(uint256 offset, uint256 limit) external view override returns (address[] memory) {
-
-    }
-    // 
-    function getBlacklistedTokens(uint256 offset, uint256 limit) external view override returns (address[] memory) {
-
-    }
-    // 
-    function isWhitelisted(address token) external view override returns (bool) {
-        return whitelistedTokens[token];
-    }
-    // 
-    function isBlacklisted(address token) external view override returns (bool) {
-        return blacklistedTokens[token];
-    }
 }
