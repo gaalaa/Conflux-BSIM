@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ITokenListManager} from "./ITokenListManager.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract TokenListManager is ITokenListManager {
 
@@ -14,16 +15,29 @@ contract TokenListManager is ITokenListManager {
     // Use mapping to check if token in blacklist
     mapping(address => bool) private blacklistedTokens;
 
+    // Set permissions
+    modifier onlyOwner() {
+        // Match address
+        /** 0xC0Ec75c25EC201885a791Fd8d39Bf8CE96e1c566
+         * this address is my own test address
+         * owner can use thier own address to replace. */
+        require(msg.sender == 0xC0Ec75c25EC201885a791Fd8d39Bf8CE96e1c566, "Not authorized");
+        _;
+    }
+
     // Implement the addTokens method and add tokens to whitelist
-    function addTokens(address[] calldata tokens) external override {
+    function addTokens(address[] calldata tokens) external override onlyOwner{
         for (uint i = 0; i < tokens.length; i++) {
+            if (!whitelistedTokens[tokens[i]]) {
             // Mark each token address as whitelisted
-            whitelistedTokens[tokens[i]] = true;
+                whitelistedTokens[tokens[i]] = true;
+                whitelistedTokensArray.push(tokens[i]);
+            }
         }
     }
 
     // Implement the removeTokens method and remove tokens from whitelist
-    function removeTokens(address[] calldata tokens) external override {
+    function removeTokens(address[] calldata tokens) external override onlyOwner{
         for (uint i = 0; i < tokens.length; i++) {
             // Remove each token address from whitelist
             whitelistedTokens[tokens[i]] = false;
@@ -31,7 +45,7 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the addBlacklistedTokens method and add tokens to blacklist
-    function addBlacklistedTokens(address[] calldata tokens) external override {
+    function addBlacklistedTokens(address[] calldata tokens) external override onlyOwner(){
         for (uint i = 0; i < tokens.length; i++) {
             // Mark each token address as whitelisted
             blacklistedTokens[tokens[i]] = true;
@@ -39,7 +53,7 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the removeBlacklistedTokens method and remove tokens from blacklist
-    function removeBlacklistedTokens(address[] calldata tokens) external override {
+    function removeBlacklistedTokens(address[] calldata tokens) external override onlyOwner{
         for (uint i = 0; i < tokens.length; i++) {
             // Remove each token address from whitelist
             blacklistedTokens[tokens[i]] = false;
