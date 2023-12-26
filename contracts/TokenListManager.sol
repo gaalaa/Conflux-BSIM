@@ -28,9 +28,11 @@ contract TokenListManager is ITokenListManager {
     // Implement the addTokens method and add tokens to whitelist
     function addTokens(address[] calldata tokens) external override onlyOwner{
         for (uint i = 0; i < tokens.length; i++) {
+            // Check if the token is not already whitelisted
             if (!whitelistedTokens[tokens[i]]) {
-            // Mark each token address as whitelisted
+                // Mark the token address as whitelisted in the mapping
                 whitelistedTokens[tokens[i]] = true;
+                // Add the token address to the array of whitelisted tokens
                 whitelistedTokensArray.push(tokens[i]);
             }
         }
@@ -47,8 +49,13 @@ contract TokenListManager is ITokenListManager {
     // Implement the addBlacklistedTokens method and add tokens to blacklist
     function addBlacklistedTokens(address[] calldata tokens) external override onlyOwner(){
         for (uint i = 0; i < tokens.length; i++) {
-            // Mark each token address as whitelisted
-            blacklistedTokens[tokens[i]] = true;
+            // Check if the token is not already blacklisted
+            if (!blacklistedTokens[tokens[i]]) {
+                // Mark the token address as blacklisted in the mapping
+                blacklistedTokens[tokens[i]] = true;
+                // Add the token address to the array of blacklisted tokens
+                blacklistedTokensArray.push(tokens[i]);
+            }
         }
     }
 
