@@ -16,10 +16,10 @@ interface ITokenListManager {
     function removeBlacklistedTokens(address[] calldata tokens) external;
 
     // Get tokens in whitelist, paging supported
-    function getWhitelistedTokens(uint256 offset, uint256 limit) external view returns (address[] memory);
+    function getWhitelistedTokens(uint256 offset, uint256 limit) external view returns (address[] memory, uint256);
 
     // Get tokens in blacklist, paging supported
-    function getBlacklistedTokens(uint256 offset, uint256 limit) external view returns (address[] memory);
+    function getBlacklistedTokens(uint256 offset, uint256 limit) external view returns (address[] memory, uint256);
 
     // Determine if the token in whitelist
     function isWhitelisted(address token) external view returns (bool);

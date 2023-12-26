@@ -68,13 +68,14 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the getWhitelistedTokens method
-    function getWhitelistedTokens(uint256 offset, uint256 limit) external view override returns (address[] memory) {
+    function getWhitelistedTokens(uint256 offset, uint256 limit) 
+    external view override returns (address[] memory, uint256) {
         uint256 total = whitelistedTokensArray.length;
         // Calculate the size of the returned array
-        // Check if offset is greater than total
-        if (offset > total) {
+        // Check if offset is greater or equal than total
+        if (offset >= total) {
             // If so, return empty
-            return new address[](0);
+            return (new address[](0), total);
         }
         // Calculate the actual quantity returned
         // Initializes numItems with the value of limit.
@@ -91,15 +92,16 @@ contract TokenListManager is ITokenListManager {
             whitelisted[i] = whitelistedTokensArray[offset + i];
         }
 
-        return whitelisted;
+        return (whitelisted, total);
     }
 
     // Implement the getBlacklistedTokens method
-    function getBlacklistedTokens(uint256 offset, uint256 limit) external view override returns (address[] memory) {
+    function getBlacklistedTokens(uint256 offset, uint256 limit) 
+    external view override returns (address[] memory, uint256) {
         uint256 total = blacklistedTokensArray.length;
         // Calculate the size of the returned array
-        if (offset > total) {
-            return new address[](0);
+        if (offset >= total) {
+            return (new address[](0), total);
         }
         // Calculate the actual quantity returned
         uint256 numItems = limit;
@@ -112,7 +114,7 @@ contract TokenListManager is ITokenListManager {
             blacklisted[i] = blacklistedTokensArray[offset + i];
         }
 
-        return blacklisted;
+        return (blacklisted, total);
     }
 
     // Implement the isWhitelisted method and check weather the token is in whitelist
