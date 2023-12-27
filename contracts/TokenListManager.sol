@@ -30,7 +30,7 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the addTokens method and add tokens to whitelist
-    function addTokens(address[] calldata tokens) external override onlyOwner{
+    function addTokens(address[] calldata tokens) external override onlyOwner {
         for (uint i = 0; i < tokens.length; i++) {
             // Check if the token is not already whitelisted
             if (!whitelistedTokens[tokens[i]]) {
@@ -43,15 +43,34 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the removeTokens method and remove tokens from whitelist
-    function removeTokens(address[] calldata tokens) external override onlyOwner{
+    function removeTokens(address[] calldata tokens) external override onlyOwner {
         for (uint i = 0; i < tokens.length; i++) {
-            // Remove each token address from whitelist
-            whitelistedTokens[tokens[i]] = false;
+            // Check if the token in whitelist
+            if (whitelistedTokens[tokens[i]]) {
+                // Remove each token address from whitelist
+                whitelistedTokens[tokens[i]] = false;
+                // Call internal function below to remove from the array
+                removeTokenFromWhitelistArray(tokens[i]);
+            }
         }
     }
 
+    // The internal function that to remove token from whitelist array (Reduce gas)
+    function removeTokenFromWhitelistArray(address token) internal {
+        for (uint i = 0; i < whitelistedTokensArray.length; i++) {
+            if (whitelistedTokensArray[i] == token) {
+                // Swap the token with last element in whitelistedTokensArray
+                whitelistedTokensArray[i] = whitelistedTokensArray[whitelistedTokensArray.length - 1];
+                // Remove to last element
+                whitelistedTokensArray.pop();
+                break;
+            }
+        }
+    }
+
+
     // Implement the addBlacklistedTokens method and add tokens to blacklist
-    function addBlacklistedTokens(address[] calldata tokens) external override onlyOwner(){
+    function addBlacklistedTokens(address[] calldata tokens) external override onlyOwner {
         for (uint i = 0; i < tokens.length; i++) {
             // Check if the token is not already blacklisted
             if (!blacklistedTokens[tokens[i]]) {
@@ -64,10 +83,27 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the removeBlacklistedTokens method and remove tokens from blacklist
-    function removeBlacklistedTokens(address[] calldata tokens) external override onlyOwner{
+    function removeBlacklistedTokens(address[] calldata tokens) external override onlyOwner {
         for (uint i = 0; i < tokens.length; i++) {
-            // Remove each token address from whitelist
-            blacklistedTokens[tokens[i]] = false;
+            if (blacklistedTokens[tokens[i]]) {
+                // Remove each token address from blacklist
+                blacklistedTokens[tokens[i]] = false;
+                // Remove from the array
+                removeTokenFromBlacklistArray(tokens[i]);
+            }
+        }
+    }
+    
+    // The internal function that to remove token from blacklist array (Reduce gas)
+    function removeTokenFromBlacklistArray(address token) internal {
+        for (uint i = 0; i < blacklistedTokensArray.length; i++) {
+            if (blacklistedTokensArray[i] == token) {
+                // Swap the token with last element in blacklistedTokensArray
+                blacklistedTokensArray[i] = blacklistedTokensArray[blacklistedTokensArray.length - 1];
+                // Remove to last element
+                blacklistedTokensArray.pop();
+                break;
+            }
         }
     }
 
