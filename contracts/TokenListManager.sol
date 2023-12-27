@@ -2,17 +2,25 @@
 pragma solidity ^0.8.20;
 
 import {ITokenListManager} from "./ITokenListManager.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract TokenListManager is ITokenListManager {
 
     // Storage the token address to whitelist or blacklist
     address[] private whitelistedTokensArray;
     address[] private blacklistedTokensArray;
+    // Declare arrays to store addresses of whitelisted tokens by type
+    address[] private whitelistErc20Tokens;
+    address[] private whitelistErc721Tokens;
+    address[] private whitelistErc1155Tokens;
+    // Declare arrays to store addresses of blacklisted tokens by type
+    address[] private blacklistErc20Tokens;
+    address[] private blacklistErc721Tokens;
+    address[] private blacklistErc1155Tokens;
 
     // Use mapping to check if token in whitelist
     mapping(address => bool) private whitelistedTokens;
@@ -34,6 +42,21 @@ contract TokenListManager is ITokenListManager {
         for (uint i = 0; i < tokens.length; i++) {
             // Check if the token is not already whitelisted
             if (!whitelistedTokens[tokens[i]]) {
+                // If the token type is ERC-20
+                if (IERC165(tokens[i]).supportsInterface(type(IERC20).interfaceId)) {
+                    // Storage to whitelistErc20Tokens
+                    whitelistErc20Tokens.push(tokens[i]);
+                // If the token type is IERC-721
+                } else if (IERC165(tokens[i]).supportsInterface(type(IERC721).interfaceId)) {
+                    // Storage to whitelistErc721Tokens
+                    whitelistErc721Tokens.push(tokens[i]);
+                // If the token type is IERC-1155
+                } else if (IERC165(tokens[i]).supportsInterface(type(IERC1155).interfaceId)) {
+                    // Storage to whitelistErc1155Tokens
+                    whitelistErc1155Tokens.push(tokens[i]);
+                } else {
+                    revert("Unsupported token type");
+                }
                 // Mark the token address as whitelisted in the mapping
                 whitelistedTokens[tokens[i]] = true;
                 // Add the token address to the array of whitelisted tokens
@@ -74,6 +97,21 @@ contract TokenListManager is ITokenListManager {
         for (uint i = 0; i < tokens.length; i++) {
             // Check if the token is not already blacklisted
             if (!blacklistedTokens[tokens[i]]) {
+                // If the token type is ERC-20
+                if (IERC165(tokens[i]).supportsInterface(type(IERC20).interfaceId)) {
+                    // Storage to blacklistErc20Tokens
+                    blacklistErc20Tokens.push(tokens[i]);
+                // If the token type is IERC-721
+                } else if (IERC165(tokens[i]).supportsInterface(type(IERC721).interfaceId)) {
+                    // Storage to blacklistErc721Tokens
+                    blacklistErc721Tokens.push(tokens[i]);
+                // If the token type is IERC-1155
+                } else if (IERC165(tokens[i]).supportsInterface(type(IERC1155).interfaceId)) {
+                    // Storage to blacklistErc1155Tokens
+                    blacklistErc1155Tokens.push(tokens[i]);
+                } else {
+                    revert("Unsupported token type");
+                }
                 // Mark the token address as blacklisted in the mapping
                 blacklistedTokens[tokens[i]] = true;
                 // Add the token address to the array of blacklisted tokens
@@ -108,50 +146,70 @@ contract TokenListManager is ITokenListManager {
     }
 
     // Implement the getWhitelistedTokens method
-    function getWhitelistedTokens(uint256 offset, uint256 limit) 
-    external view override returns (address[] memory, uint256) {
-        uint256 total = whitelistedTokensArray.length;
+    function getWhitelistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
+    external view returns (address[] memory, uint256) {
+        
+        address[] storage tokenArray;
+
+        // Determine which token array to use based on the tokenType parameter
+        if (tokenType == TokenType.ERC20) {
+            tokenArray = whitelistErc20Tokens; // Point to ERC-20 tokens array
+        } else if (tokenType == TokenType.ERC721) {
+            tokenArray = whitelistErc721Tokens; // Point to ERC-721 tokens array
+        } else if (tokenType == TokenType.ERC1155) {
+            tokenArray = whitelistErc1155Tokens; // Point to ERC-1155 tokens array
+        } else {
+            revert("Invalid token type");
+        }
+
+        uint256 total = tokenArray.length;
         // Calculate the size of the returned array
         // Check if offset is greater or equal than total
         if (offset >= total) {
             // If so, return empty
             return (new address[](0), total);
         }
-        // Calculate the actual quantity returned
-        // Initializes numItems with the value of limit.
-        uint256 numItems = limit;
-        // If the sum of offset and limit is greater than total
-        if (offset + limit > total) {
-            // Set numItems to the remaining number of items from the offset.
-            numItems = total - offset;
-        }
-        // Create return array
+
+        // Calculate the number of items to return, adjusting for the case where offset + limit exceeds total
+        uint256 numItems = (offset + limit > total) ? total - offset : limit;
+        // Create an array to hold the returned token address
         address[] memory whitelisted = new address[](numItems);
-        // Starting from offset and covering numItems
         for (uint256 i = 0; i < numItems; i++) {
-            whitelisted[i] = whitelistedTokensArray[offset + i];
+            whitelisted[i] = tokenArray[offset + i];
         }
 
         return (whitelisted, total);
     }
 
     // Implement the getBlacklistedTokens method
-    function getBlacklistedTokens(uint256 offset, uint256 limit) 
-    external view override returns (address[] memory, uint256) {
-        uint256 total = blacklistedTokensArray.length;
+    function getBlacklistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
+    external view returns (address[] memory, uint256) {
+        
+        address[] storage tokenArray;
+
+        // Determine which token array to use based on the tokenType parameter
+        if (tokenType == TokenType.ERC20) {
+            tokenArray = blacklistErc20Tokens;
+        } else if (tokenType == TokenType.ERC721) {
+            tokenArray = blacklistErc721Tokens;
+        } else if (tokenType == TokenType.ERC1155) {
+            tokenArray = blacklistErc1155Tokens;
+        } else {
+            revert("Invalid token type");
+        }
+
+        uint256 total = tokenArray.length;
         // Calculate the size of the returned array
         if (offset >= total) {
             return (new address[](0), total);
         }
-        // Calculate the actual quantity returned
-        uint256 numItems = limit;
-        if (offset + limit > total) {
-            numItems = total - offset;
-        }
-        // Create return array
+
+        // Calculate the number of items to return, adjusting for the case where offset + limit exceeds total
+        uint256 numItems = (offset + limit > total) ? total - offset : limit;
+        // Create an array to hold the returned token address
         address[] memory blacklisted = new address[](numItems);
         for (uint256 i = 0; i < numItems; i++) {
-            blacklisted[i] = blacklistedTokensArray[offset + i];
+            blacklisted[i] = tokenArray[offset + i];
         }
 
         return (blacklisted, total);
