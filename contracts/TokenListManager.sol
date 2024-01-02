@@ -6,176 +6,80 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract TokenListManager is ITokenListManager {
+contract TokenListManager is ITokenListManager, AccessControl {
 
-    // Storage the token address to whitelist or blacklist
-    address[] private whitelistedTokensArray;
-    address[] private blacklistedTokensArray;
-    // Declare arrays to store addresses of whitelisted tokens by type
-    address[] private whitelistErc20Tokens;
-    address[] private whitelistErc721Tokens;
-    address[] private whitelistErc1155Tokens;
-    // Declare arrays to store addresses of blacklisted tokens by type
-    address[] private blacklistErc20Tokens;
-    address[] private blacklistErc721Tokens;
-    address[] private blacklistErc1155Tokens;
+    // Utilize EnumerableSet for efficient set operations.
+    using EnumerableSet for EnumerableSet.AddressSet;
 
-    // Use mapping to check if token in whitelist
-    mapping(address => bool) private whitelistedTokens;
-    // Use mapping to check if token in blacklist
-    mapping(address => bool) private blacklistedTokens;
+    // Define roles for administrative control and user access.
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant USER_ROLE = keccak256("USER_ROLE");
 
-    // Set permissions
-    modifier onlyOwner() {
-        // Match address
-        /** 0xC0Ec75c25EC201885a791Fd8d39Bf8CE96e1c566
-         * this address is my own test address
-         * owner can use thier own address to replace. */
-        require(msg.sender == 0xC0Ec75c25EC201885a791Fd8d39Bf8CE96e1c566, "Not authorized");
+    // Mappings for whitelisted and blacklisted tokens, categorized by token type.
+    mapping(TokenType => EnumerableSet.AddressSet) private whitelistedTokens;
+    mapping(TokenType => EnumerableSet.AddressSet) private blacklistedTokens;
+
+    // Contract constructor setting up initial admin role.
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setRoleAdmin(USER_ROLE, ADMIN_ROLE);
+    }
+
+    // Modifier to restrict function access to users with the admin role.
+    modifier onlyAdmin() {
+        require(hasRole(ADMIN_ROLE, msg.sender), "Not authorized: caller is not an admin");
         _;
     }
 
-    // Implement the addTokens method and add tokens to whitelist
-    function addTokens(address[] calldata tokens) external override onlyOwner {
+    // Implement the addTokens method and add tokens to whitelist, only accessible by admin
+    function addTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
         for (uint i = 0; i < tokens.length; i++) {
-            // Check if the token is not already whitelisted
-            if (!whitelistedTokens[tokens[i]]) {
-                // If the token type is ERC-20
-                if (IERC165(tokens[i]).supportsInterface(type(IERC20).interfaceId)) {
-                    // Storage to whitelistErc20Tokens
-                    whitelistErc20Tokens.push(tokens[i]);
-                // If the token type is IERC-721
-                } else if (IERC165(tokens[i]).supportsInterface(type(IERC721).interfaceId)) {
-                    // Storage to whitelistErc721Tokens
-                    whitelistErc721Tokens.push(tokens[i]);
-                // If the token type is IERC-1155
-                } else if (IERC165(tokens[i]).supportsInterface(type(IERC1155).interfaceId)) {
-                    // Storage to whitelistErc1155Tokens
-                    whitelistErc1155Tokens.push(tokens[i]);
-                } else {
-                    revert("Unsupported token type");
-                }
-                // Mark the token address as whitelisted in the mapping
-                whitelistedTokens[tokens[i]] = true;
-                // Add the token address to the array of whitelisted tokens
-                whitelistedTokensArray.push(tokens[i]);
-            }
+            whitelistedTokens[tokenType].add(tokens[i]);
         }
     }
 
-    // Implement the removeTokens method and remove tokens from whitelist
-    function removeTokens(address[] calldata tokens) external override onlyOwner {
+    // Implement the removeTokens method and remove tokens from whitelist, only accessible by admin
+    function removeTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
         for (uint i = 0; i < tokens.length; i++) {
-            // Check if the token in whitelist
-            if (whitelistedTokens[tokens[i]]) {
-                // Remove each token address from whitelist
-                whitelistedTokens[tokens[i]] = false;
-                // Call internal function below to remove from the array
-                removeTokenFromWhitelistArray(tokens[i]);
-            }
+            whitelistedTokens[tokenType].remove(tokens[i]);
         }
     }
 
-    // The internal function that to remove token from whitelist array (Reduce gas)
-    function removeTokenFromWhitelistArray(address token) internal {
-        for (uint i = 0; i < whitelistedTokensArray.length; i++) {
-            if (whitelistedTokensArray[i] == token) {
-                // Swap the token with last element in whitelistedTokensArray
-                whitelistedTokensArray[i] = whitelistedTokensArray[whitelistedTokensArray.length - 1];
-                // Remove to last element
-                whitelistedTokensArray.pop();
-                break;
-            }
-        }
-    }
-
-
-    // Implement the addBlacklistedTokens method and add tokens to blacklist
-    function addBlacklistedTokens(address[] calldata tokens) external override onlyOwner {
+    // Implement the addBlacklistedTokens method and add tokens to blacklist, only accessible by admin
+    function addBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
         for (uint i = 0; i < tokens.length; i++) {
-            // Check if the token is not already blacklisted
-            if (!blacklistedTokens[tokens[i]]) {
-                // If the token type is ERC-20
-                if (IERC165(tokens[i]).supportsInterface(type(IERC20).interfaceId)) {
-                    // Storage to blacklistErc20Tokens
-                    blacklistErc20Tokens.push(tokens[i]);
-                // If the token type is IERC-721
-                } else if (IERC165(tokens[i]).supportsInterface(type(IERC721).interfaceId)) {
-                    // Storage to blacklistErc721Tokens
-                    blacklistErc721Tokens.push(tokens[i]);
-                // If the token type is IERC-1155
-                } else if (IERC165(tokens[i]).supportsInterface(type(IERC1155).interfaceId)) {
-                    // Storage to blacklistErc1155Tokens
-                    blacklistErc1155Tokens.push(tokens[i]);
-                } else {
-                    revert("Unsupported token type");
-                }
-                // Mark the token address as blacklisted in the mapping
-                blacklistedTokens[tokens[i]] = true;
-                // Add the token address to the array of blacklisted tokens
-                blacklistedTokensArray.push(tokens[i]);
-            }
+            blacklistedTokens[tokenType].add(tokens[i]);
         }
     }
 
-    // Implement the removeBlacklistedTokens method and remove tokens from blacklist
-    function removeBlacklistedTokens(address[] calldata tokens) external override onlyOwner {
+    // Implement the removeBlacklistedTokens method and remove tokens from blacklist, only accessible by admin
+    function removeBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
         for (uint i = 0; i < tokens.length; i++) {
-            if (blacklistedTokens[tokens[i]]) {
-                // Remove each token address from blacklist
-                blacklistedTokens[tokens[i]] = false;
-                // Remove from the array
-                removeTokenFromBlacklistArray(tokens[i]);
-            }
-        }
-    }
-    
-    // The internal function that to remove token from blacklist array (Reduce gas)
-    function removeTokenFromBlacklistArray(address token) internal {
-        for (uint i = 0; i < blacklistedTokensArray.length; i++) {
-            if (blacklistedTokensArray[i] == token) {
-                // Swap the token with last element in blacklistedTokensArray
-                blacklistedTokensArray[i] = blacklistedTokensArray[blacklistedTokensArray.length - 1];
-                // Remove to last element
-                blacklistedTokensArray.pop();
-                break;
-            }
+            blacklistedTokens[tokenType].remove(tokens[i]);
         }
     }
 
     // Implement the getWhitelistedTokens method
     function getWhitelistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
     external view returns (address[] memory, uint256) {
-        
-        address[] storage tokenArray;
 
-        // Determine which token array to use based on the tokenType parameter
-        if (tokenType == TokenType.ERC20) {
-            tokenArray = whitelistErc20Tokens; // Point to ERC-20 tokens array
-        } else if (tokenType == TokenType.ERC721) {
-            tokenArray = whitelistErc721Tokens; // Point to ERC-721 tokens array
-        } else if (tokenType == TokenType.ERC1155) {
-            tokenArray = whitelistErc1155Tokens; // Point to ERC-1155 tokens array
-        } else {
-            revert("Invalid token type");
-        }
+        // Access the set of whitelisted token addresses for the specified token type.
+        EnumerableSet.AddressSet storage tokenSet = whitelistedTokens[tokenType];
 
-        uint256 total = tokenArray.length;
-        // Calculate the size of the returned array
-        // Check if offset is greater or equal than total
-        if (offset >= total) {
-            // If so, return empty
-            return (new address[](0), total);
-        }
+        uint256 total = tokenSet.length();
 
-        // Calculate the number of items to return, adjusting for the case where offset + limit exceeds total
+        // Calculate the number of items to return, based on the provided offset and limit.
+        // If the sum of offset and limit exceeds the total, return the remaining items.
         uint256 numItems = (offset + limit > total) ? total - offset : limit;
-        // Create an array to hold the returned token address
+        // Initialize an array to store the addresses of the whitelisted tokens to be returned.
         address[] memory whitelisted = new address[](numItems);
+
+        // Iterate over the token set, starting from the offset and covering the number of items calculated.
         for (uint256 i = 0; i < numItems; i++) {
-            whitelisted[i] = tokenArray[offset + i];
+            // Retrieve each token address using its index and add it to the whitelisted array.
+            whitelisted[i] = tokenSet.at(offset + i);
         }
 
         return (whitelisted, total);
@@ -184,44 +88,26 @@ contract TokenListManager is ITokenListManager {
     // Implement the getBlacklistedTokens method
     function getBlacklistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
     external view returns (address[] memory, uint256) {
-        
-        address[] storage tokenArray;
+        // The comments below all same as the getWhitelistedTokens
+        EnumerableSet.AddressSet storage tokenSet = blacklistedTokens[tokenType];
 
-        // Determine which token array to use based on the tokenType parameter
-        if (tokenType == TokenType.ERC20) {
-            tokenArray = blacklistErc20Tokens;
-        } else if (tokenType == TokenType.ERC721) {
-            tokenArray = blacklistErc721Tokens;
-        } else if (tokenType == TokenType.ERC1155) {
-            tokenArray = blacklistErc1155Tokens;
-        } else {
-            revert("Invalid token type");
-        }
-
-        uint256 total = tokenArray.length;
-        // Calculate the size of the returned array
-        if (offset >= total) {
-            return (new address[](0), total);
-        }
-
-        // Calculate the number of items to return, adjusting for the case where offset + limit exceeds total
+        uint256 total = tokenSet.length();
         uint256 numItems = (offset + limit > total) ? total - offset : limit;
-        // Create an array to hold the returned token address
         address[] memory blacklisted = new address[](numItems);
         for (uint256 i = 0; i < numItems; i++) {
-            blacklisted[i] = tokenArray[offset + i];
+            blacklisted[i] = tokenSet.at(offset + i);
         }
 
         return (blacklisted, total);
     }
 
-    // Implement the isWhitelisted method and check weather the token is in whitelist
-    function isWhitelisted(address token) external view override returns (bool) {
-        return whitelistedTokens[token];
+    // Check if a token is whitelisted
+    function isWhitelisted(address token, TokenType tokenType) public view returns (bool) {
+        return whitelistedTokens[tokenType].contains(token);
     }
 
-    // Implement the isBlacklisted method and check weather the token is in blacklist
-    function isBlacklisted(address token) external view override returns (bool) {
-        return blacklistedTokens[token];
+    // Check if a token is blacklisted
+    function isBlacklisted(address token, TokenType tokenType) public view returns (bool) {
+        return blacklistedTokens[tokenType].contains(token);
     }
 }

@@ -11,16 +11,16 @@ interface ITokenListManager {
     }
 
     // Add tokens to tokenlist(whitelist), batch supported
-    function addTokens(address[] calldata tokens) external;
+    function addTokens(address[] calldata tokens, TokenType tokenType) external;
 
     // Remove tokens from tokenlist(whitelist), batch supported
-    function removeTokens(address[] calldata tokens) external;
+    function removeTokens(address[] calldata tokens, TokenType tokenType) external;
 
     // Add tokens to blacklist, batch supported
-    function addBlacklistedTokens(address[] calldata tokens) external;
+    function addBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external;
 
     // Remove tokens from blacklist, batch supported
-    function removeBlacklistedTokens(address[] calldata tokens) external;
+    function removeBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external;
 
     // Get tokens in whitelist, paging supported
     function getWhitelistedTokens(TokenType tokenType, uint256 offset, uint256 limit) external view returns (address[] memory, uint256);
@@ -29,8 +29,8 @@ interface ITokenListManager {
     function getBlacklistedTokens(TokenType tokenType, uint256 offset, uint256 limit) external view returns (address[] memory, uint256);
 
     // Determine if the token in whitelist
-    function isWhitelisted(address token) external view returns (bool);
+    function isWhitelisted(address token, TokenType tokenType) external view returns (bool);
 
     // Determine if the token in blacklist
-    function isBlacklisted(address token) external view returns (bool);
+    function isBlacklisted(address token, TokenType tokenType) external view returns (bool);
 }
