@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface ITokenListManager {
+import "@openzeppelin/contracts/interfaces/IERC165.sol";
+
+interface ITokenListManager is IERC165 {
 
     // Enum to distinguish between different token types
     enum TokenType {
-    ERC20,
-    ERC721,
-    ERC1155
+        ERC20,
+        ERC721,
+        ERC1155
     }
 
     // Add tokens to tokenlist(whitelist), batch supported

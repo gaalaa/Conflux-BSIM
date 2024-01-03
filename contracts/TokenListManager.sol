@@ -14,48 +14,43 @@ contract TokenListManager is ITokenListManager, AccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // Define roles for administrative control and user access.
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant USER_ROLE = keccak256("USER_ROLE");
+    bytes32 public constant TOKEN_MANAGER_ROLE = keccak256("TOKEN_MANAGER_ROLE");
 
     // Mappings for whitelisted and blacklisted tokens, categorized by token type.
     mapping(TokenType => EnumerableSet.AddressSet) private whitelistedTokens;
     mapping(TokenType => EnumerableSet.AddressSet) private blacklistedTokens;
 
-    // Contract constructor setting up initial admin role.
-    constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setRoleAdmin(USER_ROLE, ADMIN_ROLE);
-    }
-
-    // Modifier to restrict function access to users with the admin role.
-    modifier onlyAdmin() {
-        require(hasRole(ADMIN_ROLE, msg.sender), "Not authorized: caller is not an admin");
-        _;
-    }
-
     // Implement the addTokens method and add tokens to whitelist, only accessible by admin
-    function addTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
+    function addTokens(address[] calldata tokens, TokenType tokenType) external {
+        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
         for (uint i = 0; i < tokens.length; i++) {
+            // Check if the token is blacklist
+            require(!blacklistedTokens[tokenType].contains(tokens[i]), "Token is blacklisted, please remove it from blacklist first");
             whitelistedTokens[tokenType].add(tokens[i]);
         }
     }
 
     // Implement the removeTokens method and remove tokens from whitelist, only accessible by admin
-    function removeTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
+    function removeTokens(address[] calldata tokens, TokenType tokenType) external {
+        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
         for (uint i = 0; i < tokens.length; i++) {
             whitelistedTokens[tokenType].remove(tokens[i]);
         }
     }
 
     // Implement the addBlacklistedTokens method and add tokens to blacklist, only accessible by admin
-    function addBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
+    function addBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external {
+        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
         for (uint i = 0; i < tokens.length; i++) {
+            // Check if the token is whitelisted
+            require(!whitelistedTokens[tokenType].contains(tokens[i]), "Token is whitelisted, please remove it from whitelist first");
             blacklistedTokens[tokenType].add(tokens[i]);
         }
     }
 
     // Implement the removeBlacklistedTokens method and remove tokens from blacklist, only accessible by admin
-    function removeBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external onlyAdmin {
+    function removeBlacklistedTokens(address[] calldata tokens, TokenType tokenType) external {
+        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
         for (uint i = 0; i < tokens.length; i++) {
             blacklistedTokens[tokenType].remove(tokens[i]);
         }
