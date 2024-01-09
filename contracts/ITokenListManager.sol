@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/interfaces/IERC165.sol";
-
-interface ITokenListManager is IERC165 {
+interface ITokenListManager {
 
     // Enum to distinguish between different token types
     enum TokenType {
@@ -24,13 +22,13 @@ interface ITokenListManager is IERC165 {
     // Remove tokens from blacklist, batch supported
     function removeBlacklistedTokens(address[] calldata tokens) external;
 
-    // Get tokens in whitelist, paging supported
-    function getWhitelistedTokens(uint256 offset, uint256 limit) 
-    external view returns (address[] memory whitelistedERC20Tokens, address[] memory whitelistedERC721Tokens, address[] memory whitelistedERC1155Tokens);
+    // Get tokens of a specific type in whitelist, paging supported
+    function getWhitelistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
+    external view returns (address[] memory tokens);
 
-    // Get tokens in blacklist, paging supported
-    function getBlacklistedTokens(uint256 offset, uint256 limit) 
-    external view returns (address[] memory blacklistedERC20Tokens, address[] memory blacklistedERC721Tokens, address[] memory blacklistedERC1155Tokens);
+    // Get tokens of a specific type in blacklist, paging supported
+    function getBlacklistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
+    external view returns (address[] memory tokens);
 
     // Determine if the token in whitelist
     function isWhitelisted(address token) external view returns (bool);

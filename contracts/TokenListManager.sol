@@ -35,8 +35,7 @@ contract TokenListManager is ITokenListManager, AccessControl {
     }
 
     // Add tokens to whitelist, only accessible by admin
-    function addTokens(address[] calldata tokens) external {
-        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
+    function addTokens(address[] calldata tokens) external onlyRole(TOKEN_MANAGER_ROLE) {
 
         for (uint i = 0; i < tokens.length; i++) {
             // According to the token type, add it to the whitelist and check whether it is in the blacklist
@@ -55,8 +54,7 @@ contract TokenListManager is ITokenListManager, AccessControl {
     }
 
     // Remove tokens from whitelist, only accessible by admin
-    function removeTokens(address[] calldata tokens) external {
-        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
+    function removeTokens(address[] calldata tokens) external onlyRole(TOKEN_MANAGER_ROLE) {
 
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i].supportsInterface(type(IERC721).interfaceId)) {
@@ -70,8 +68,8 @@ contract TokenListManager is ITokenListManager, AccessControl {
     }
 
     // Add tokens to blacklist, only accessible by admin
-    function addBlacklistedTokens(address[] calldata tokens) external {
-        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
+    function addBlacklistedTokens(address[] calldata tokens) external onlyRole(TOKEN_MANAGER_ROLE) {
+
 
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i].supportsInterface(type(IERC721).interfaceId)) {
@@ -88,8 +86,7 @@ contract TokenListManager is ITokenListManager, AccessControl {
     }
 
     // Remove tokens from blacklist, only accessible by admin
-    function removeBlacklistedTokens(address[] calldata tokens) external {
-        require(hasRole(TOKEN_MANAGER_ROLE, msg.sender), "Caller is not a token manager");
+    function removeBlacklistedTokens(address[] calldata tokens) external onlyRole(TOKEN_MANAGER_ROLE) {
 
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i].supportsInterface(type(IERC721).interfaceId)) {
@@ -116,21 +113,27 @@ contract TokenListManager is ITokenListManager, AccessControl {
     }
 
     // Get the list of tokens in the whitelist
-    function getWhitelistedTokens(uint256 offset, uint256 limit) 
-    external view returns (address[] memory whitelistedERC20Tokens, address[] memory whitelistedERC721Tokens, address[] memory whitelistedERC1155Tokens) {
-
-        whitelistedERC20Tokens = getTokensFromSet(whitelistedERC20, offset, limit);
-        whitelistedERC721Tokens = getTokensFromSet(whitelistedERC721, offset, limit);
-        whitelistedERC1155Tokens = getTokensFromSet(whitelistedERC1155, offset, limit);
+    function getWhitelistedTokens(TokenType tokenType, uint256 offset, uint256 limit) 
+    external view override returns (address[] memory tokens) {
+        if (tokenType == TokenType.ERC20) {
+            tokens = getTokensFromSet(whitelistedERC20, offset, limit);
+        } else if (tokenType == TokenType.ERC721) {
+            tokens = getTokensFromSet(whitelistedERC721, offset, limit);
+        } else if (tokenType == TokenType.ERC1155) {
+            tokens = getTokensFromSet(whitelistedERC1155, offset, limit);
+        }
     }
 
     // Get the list of tokens in the blacklist
-    function getBlacklistedTokens(uint256 offset, uint256 limit)
-    external view returns (address[] memory blacklistedERC20Tokens, address[] memory blacklistedERC721Tokens, address[] memory blacklistedERC1155Tokens) {
-
-        blacklistedERC20Tokens = getTokensFromSet(blacklistedERC20, offset, limit);
-        blacklistedERC721Tokens = getTokensFromSet(blacklistedERC721, offset, limit);
-        blacklistedERC1155Tokens = getTokensFromSet(blacklistedERC1155, offset, limit);
+    function getBlacklistedTokens(TokenType tokenType, uint256 offset, uint256 limit)
+    external view override returns (address[] memory tokens) {
+        if (tokenType == TokenType.ERC20) {
+            tokens = getTokensFromSet(blacklistedERC20, offset, limit);
+        } else if (tokenType == TokenType.ERC721) {
+            tokens = getTokensFromSet(blacklistedERC721, offset, limit);
+        } else if (tokenType == TokenType.ERC1155) {
+            tokens = getTokensFromSet(blacklistedERC1155, offset, limit);
+        }
     }
 
     // Check if the token is in the whitelist
