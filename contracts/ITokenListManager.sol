@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface ITokenListManager {
-
     // Enum to distinguish between different token types
     enum TokenType {
         ERC20,
         ERC721,
         ERC1155
     }
+
+interface ITokenListManager {
 
     // Add tokens to tokenlist(whitelist), batch supported
     function addTokens(address[] calldata tokens) external;

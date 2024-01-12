@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ITokenListManager} from "./ITokenListManager.sol";
+import "./ITokenListManager.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+
 
 contract TokenListManager is ITokenListManager, AccessControl {
 
@@ -69,7 +70,6 @@ contract TokenListManager is ITokenListManager, AccessControl {
 
     // Add tokens to blacklist, only accessible by admin
     function addBlacklistedTokens(address[] calldata tokens) external onlyRole(TOKEN_MANAGER_ROLE) {
-
 
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i].supportsInterface(type(IERC721).interfaceId)) {
