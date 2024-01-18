@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import "./ITokenListManager.sol";
+
 interface IWallet {
 
     // structed other information
@@ -13,6 +15,6 @@ interface IWallet {
     }
 
     // Get paginated token information
-    function getPaginatedTokenInfo(address user, uint start, uint limit) 
+    function getPaginatedTokenInfo(TokenType tokenType, address user, uint start, uint limit) 
     external view returns (TokenInfo[] memory tokensInfo);
 }
