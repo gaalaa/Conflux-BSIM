@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.20;
 
-import {ITokenListManager} from "./ITokenListManager.sol";
+import "./ITokenListManager.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
@@ -9,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+
 
 contract TokenListManager is ITokenListManager, AccessControl {
 
@@ -70,7 +72,6 @@ contract TokenListManager is ITokenListManager, AccessControl {
     // Add tokens to blacklist, only accessible by admin
     function addBlacklistedTokens(address[] calldata tokens) external onlyRole(TOKEN_MANAGER_ROLE) {
 
-
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i].supportsInterface(type(IERC721).interfaceId)) {
                 require(!whitelistedERC721.contains(tokens[i]), "Token is in the whitelist");
@@ -121,6 +122,33 @@ contract TokenListManager is ITokenListManager, AccessControl {
             tokens = getTokensFromSet(whitelistedERC721, offset, limit);
         } else if (tokenType == TokenType.ERC1155) {
             tokens = getTokensFromSet(whitelistedERC1155, offset, limit);
+        }
+    }
+
+    // Function to get all whitelisted tokens for a given TokenType
+    function getAllWhitelistedTokens(TokenType tokenType) public view returns (address[] memory allTokens) {
+        uint256 length;
+        if (tokenType == TokenType.ERC20) {
+            length = whitelistedERC20.length();
+            allTokens = new address[](length);
+            for (uint256 i = 0; i < length; i++) {
+                allTokens[i] = whitelistedERC20.at(i);
+            }
+        } else if (tokenType == TokenType.ERC721) {
+            length = whitelistedERC721.length();
+            allTokens = new address[](length);
+            for (uint256 i = 0; i < length; i++) {
+                allTokens[i] = whitelistedERC721.at(i);
+            }
+        } else if (tokenType == TokenType.ERC1155) {
+            length = whitelistedERC1155.length();
+            allTokens = new address[](length);
+            for (uint256 i = 0; i < length; i++) {
+                allTokens[i] = whitelistedERC1155.at(i);
+            }
+        } else {
+            // Default return for unsupported token types
+            allTokens = new address[](0);
         }
     }
 
