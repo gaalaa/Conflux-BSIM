@@ -71,17 +71,15 @@ contract Wallet is IWallet {
             ICRC1155Enumerable tokenEnumerable = ICRC1155Enumerable(tokenAddress);
             ICRC1155Metadata tokenMetadata = ICRC1155Metadata(tokenAddress);
             uint256 tokenCount = tokenEnumerable.tokenCountOf(user);
-            infos = new TokenInfo[](tokenCount);
 
-            for (uint256 i = 0; i < tokenCount; i++) {
-                uint256 tokenId = tokenEnumerable.tokenOfOwnerByIndex(user, i);
-                uint256 balance = tokenEnumerable.balanceOf(user, tokenId);
-                infos[i] = TokenInfo({
+            if (tokenCount > 0) {
+                infos = new TokenInfo[](1);
+                infos[0] = TokenInfo({
                     tokenAddress: tokenAddress,
-                    balance: balance,
+                    balance: tokenCount, // Here the balance is the count of distinct token IDs
                     name: tokenMetadata.name(),   // Use name from ICRC1155Metadata
                     symbol: tokenMetadata.symbol(), // Use symbol from ICRC1155Metadata
-                    decimals: 0 // Set decimals to 0
+                    decimals: 0 // Set decimals to 0 for NFTs
                 });
             }
         }
@@ -92,38 +90,34 @@ contract Wallet is IWallet {
     // Public function to get paginated token information
     function getPaginatedTokenInfo(TokenType tokenType, address user, uint start, uint limit) 
     external view override returns (TokenInfo[] memory tokensInfo) {
-        /* Fetches a list of token addresses from the TokenListManager 
-        based on the token type and pagination parameters */
-        address[] memory tokenAddresses = tokenListManager.getWhitelistedTokens(tokenType, start, limit);
+        // Fetches all whitelisted tokens from the TokenListManager based on the token type
+        address[] memory allTokenAddresses = tokenListManager.getAllWhitelistedTokens(tokenType);
+        TokenInfo[] memory allInfos = new TokenInfo[](allTokenAddresses.length);
         uint256 totalInfosCount = 0;
-
-        // Counts the total number of TokenInfo structs that will be included in the final result
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            TokenInfo[] memory infos = getTokenInfo(tokenAddresses[i], user);
+        
+        // Filter out tokens with non-zero balance
+        for (uint256 i = 0; i < allTokenAddresses.length; i++) {
+            TokenInfo[] memory infos = getTokenInfo(allTokenAddresses[i], user);
             for (uint256 j = 0; j < infos.length; j++) {
                 if (infos[j].balance > 0) {
-                    totalInfosCount++;
+                    allInfos[totalInfosCount++] = infos[j];
                 }
             }
         }
-        /* Allocates an array of TokenInfo structures of size equal to the 
-        total number of tokens with non-zero balance */
-        TokenInfo[] memory paginatedInfo = new TokenInfo[](totalInfosCount);
-        uint256 currentInfoIndex = 0;
-        // Populates the paginatedInfo array with TokenInfo structures
-        // Only tokens with non-zero balance are included in the final array
-        for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            TokenInfo[] memory infos = getTokenInfo(tokenAddresses[i], user);
-            for (uint256 j = 0; j < infos.length; j++) {
-                if (infos[j].balance > 0) {
-                    paginatedInfo[currentInfoIndex++] = infos[j];
-                }
-            }
+        // Applying pagination
+        uint256 paginatedSize = totalInfosCount > start ? min(totalInfosCount - start, limit) : 0;
+        TokenInfo[] memory paginatedInfo = new TokenInfo[](paginatedSize);
+        for (uint256 i = 0; i < paginatedSize; i++) {
+            paginatedInfo[i] = allInfos[start + i];
         }
 
         return paginatedInfo;
     }
 
+    // Helper function to find minimum of two uint values
+    function min(uint a, uint b) private pure returns (uint) {
+        return a < b ? a : b;
+    }
 
     // Public function to get token information for a list of addresses.
     // Fetching token data across multiple addresses at once.
