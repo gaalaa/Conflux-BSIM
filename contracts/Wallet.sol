@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "@confluxfans/contracts/token/CRC1155/extensions/ICRC1155Metadata.sol";
 import "@confluxfans/contracts/token/CRC1155/extensions/ICRC1155Enumerable.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./IWallet.sol";
 import "./TokenListManager.sol";
 
@@ -35,17 +36,17 @@ contract Wallet is IWallet {
     }
 
     // Private function to get information about a token
-    function getTokenInfo(address tokenAddress, address user) private view returns (TokenInfo[] memory) {
+    function getTokenInfo(address tokenAddress, address user) private view returns (TokenInfo memory) {
         TokenType tokenType = getTokenType(tokenAddress);
-        TokenInfo[] memory infos = new TokenInfo[](0);
-        // Handling for ERC20 tokens: Fetches balance, name, symbol, and decimals.
-        // Only includes the token if the user has a non-zero balance
+    
+        // Default empty struct. Used when the token balance is zero or token type is unsupported.
+        TokenInfo memory info;
+
         if (tokenType == TokenType.ERC20) {
             IERC20Metadata token = IERC20Metadata(tokenAddress);
             uint256 balance = token.balanceOf(user);
             if (balance > 0) {
-                infos = new TokenInfo[](1);
-                infos[0] = TokenInfo({
+                info = TokenInfo({
                     tokenAddress: tokenAddress,
                     balance: balance,
                     name: token.name(),
@@ -53,13 +54,11 @@ contract Wallet is IWallet {
                     decimals: token.decimals()
                 });
             }
-        // Handling for ERC721 tokens: Fetches balance, name, and symbol.
         } else if (tokenType == TokenType.ERC721) {
             IERC721Metadata token = IERC721Metadata(tokenAddress);
             uint256 balance = token.balanceOf(user);
             if (balance > 0) {
-                infos = new TokenInfo[](1);
-                infos[0] = TokenInfo({
+                info = TokenInfo({
                     tokenAddress: tokenAddress,
                     balance: balance,
                     name: token.name(),
@@ -73,72 +72,76 @@ contract Wallet is IWallet {
             uint256 tokenCount = tokenEnumerable.tokenCountOf(user);
 
             if (tokenCount > 0) {
-                infos = new TokenInfo[](1);
-                infos[0] = TokenInfo({
+                info = TokenInfo({
                     tokenAddress: tokenAddress,
-                    balance: tokenCount, // Here the balance is the count of distinct token IDs
-                    name: tokenMetadata.name(),   // Use name from ICRC1155Metadata
-                    symbol: tokenMetadata.symbol(), // Use symbol from ICRC1155Metadata
+                    balance: tokenCount, // Count of distinct token IDs
+                    name: tokenMetadata.name(),   // Fetching name from ICRC1155Metadata
+                    symbol: tokenMetadata.symbol(), // Fetching symbol from ICRC1155Metadata
                     decimals: 0 // Set decimals to 0 for NFTs
                 });
             }
         }
 
-        return infos;
+        return info;
     }
+    
+    // Public function to get paginated token information along with the total count
+    function getPaginatedTokenInfo(TokenType tokenType, address user, uint start, uint limit)
+    external view override returns (PaginatedTokenInfo memory) {
+        // Fetch a large set of whitelisted tokens from the TokenListManager based on the token type
+        uint256 largeLimit = type(uint256).max;
+        address[] memory potentialTokenAddresses = tokenListManager.getWhitelistedTokens(tokenType, 0, largeLimit);
 
-    // Public function to get paginated token information
-    function getPaginatedTokenInfo(TokenType tokenType, address user, uint start, uint limit) 
-    external view override returns (TokenInfo[] memory tokensInfo) {
-        // Fetches all whitelisted tokens from the TokenListManager based on the token type
-        address[] memory allTokenAddresses = tokenListManager.getAllWhitelistedTokens(tokenType);
-        TokenInfo[] memory allInfos = new TokenInfo[](allTokenAddresses.length);
+        // Temporary array to store token information
+        TokenInfo[] memory tempInfos = new TokenInfo[](potentialTokenAddresses.length);
         uint256 totalInfosCount = 0;
-        
+
         // Filter out tokens with non-zero balance
-        for (uint256 i = 0; i < allTokenAddresses.length; i++) {
-            TokenInfo[] memory infos = getTokenInfo(allTokenAddresses[i], user);
-            for (uint256 j = 0; j < infos.length; j++) {
-                if (infos[j].balance > 0) {
-                    allInfos[totalInfosCount++] = infos[j];
-                }
+        for (uint256 i = 0; i < potentialTokenAddresses.length; i++) {
+            TokenInfo memory info = getTokenInfo(potentialTokenAddresses[i], user);
+            if (info.balance > 0) {
+                tempInfos[totalInfosCount++] = info;
             }
         }
-        // Applying pagination
-        uint256 paginatedSize = totalInfosCount > start ? min(totalInfosCount - start, limit) : 0;
-        TokenInfo[] memory paginatedInfo = new TokenInfo[](paginatedSize);
-        for (uint256 i = 0; i < paginatedSize; i++) {
-            paginatedInfo[i] = allInfos[start + i];
+
+        // Determine the size of the paginated result
+        uint256 paginatedSize = Math.min(totalInfosCount, limit);
+        PaginatedTokenInfo memory result;
+        result.tokens = new TokenInfo[](paginatedSize);
+        result.total = totalInfosCount;  // Total number of tokens with non-zero balance
+
+        // Fill in the paginated token information
+        uint256 endIndex = Math.min(start + paginatedSize, totalInfosCount);
+        for (uint256 i = start; i < endIndex; i++) {
+            result.tokens[i - start] = tempInfos[i];
         }
 
-        return paginatedInfo;
-    }
-
-    // Helper function to find minimum of two uint values
-    function min(uint a, uint b) private pure returns (uint) {
-        return a < b ? a : b;
+        return result;
     }
 
     // Public function to get token information for a list of addresses.
     // Fetching token data across multiple addresses at once.
     function getTokenInfoForAddresses(address[] calldata addresses, address user) 
     external view returns (TokenInfo[] memory) {
-        // Adjusted to handle arrays returned by getTokenInfo
-        uint256 totalInfosCount = 0;
-        for (uint i = 0; i < addresses.length; i++) {
-            totalInfosCount += getTokenInfo(addresses[i], user).length;
-        }
+        // Array to store results. Its size is the same as the input addresses array.
+        TokenInfo[] memory infos = new TokenInfo[](addresses.length);
+        uint256 count = 0;
 
-        TokenInfo[] memory infos = new TokenInfo[](totalInfosCount);
-        uint256 currentInfoIndex = 0;
-
-        for (uint i = 0; i < addresses.length; i++) {
-            TokenInfo[] memory addressInfos = getTokenInfo(addresses[i], user);
-            for (uint j = 0; j < addressInfos.length; j++) {
-                infos[currentInfoIndex++] = addressInfos[j];
+        // Iterate over each address and get token info
+        for (uint256 i = 0; i < addresses.length; i++) {
+            TokenInfo memory info = getTokenInfo(addresses[i], user);
+            if (info.balance > 0) {
+                infos[count++] = info;
             }
         }
 
-        return infos;
+        // Create a new array to return only filled elements
+        TokenInfo[] memory resultInfos = new TokenInfo[](count);
+        for (uint256 i = 0; i < count; i++) {
+            resultInfos[i] = infos[i];
+        }
+
+        return resultInfos;
     }
+
 }

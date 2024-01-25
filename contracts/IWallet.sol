@@ -4,8 +4,6 @@ pragma solidity ^0.8.20;
 
 import "./ITokenListManager.sol";
 
-interface IWallet {
-
     // structed other information
     struct TokenInfo {
         address tokenAddress;
@@ -14,6 +12,14 @@ interface IWallet {
         string symbol;
         uint8 decimals;
     }
+
+    // Hold both paginated tokens and the total count
+    struct PaginatedTokenInfo {
+        TokenInfo[] tokens;
+        uint256 total;
+    }
+    
+interface IWallet {
 
     // Get paginated token information
     function getPaginatedTokenInfo(TokenType tokenType, address user, uint start, uint limit) 
