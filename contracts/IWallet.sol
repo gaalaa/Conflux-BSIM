@@ -23,5 +23,5 @@ interface IWallet {
 
     // Get paginated token information
     function getPaginatedTokenInfo(TokenType tokenType, address user, uint start, uint limit) 
-    external view returns (TokenInfo[] memory tokensInfo);
+    external view returns (PaginatedTokenInfo memory);
 }
