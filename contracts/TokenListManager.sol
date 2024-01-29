@@ -125,6 +125,33 @@ contract TokenListManager is ITokenListManager, AccessControl {
         }
     }
 
+    // Function to get all whitelisted tokens for a given TokenType
+    function getAllWhitelistedTokens(TokenType tokenType) public view returns (address[] memory allTokens) {
+        uint256 length;
+        if (tokenType == TokenType.ERC20) {
+            length = whitelistedERC20.length();
+            allTokens = new address[](length);
+            for (uint256 i = 0; i < length; i++) {
+                allTokens[i] = whitelistedERC20.at(i);
+            }
+        } else if (tokenType == TokenType.ERC721) {
+            length = whitelistedERC721.length();
+            allTokens = new address[](length);
+            for (uint256 i = 0; i < length; i++) {
+                allTokens[i] = whitelistedERC721.at(i);
+            }
+        } else if (tokenType == TokenType.ERC1155) {
+            length = whitelistedERC1155.length();
+            allTokens = new address[](length);
+            for (uint256 i = 0; i < length; i++) {
+                allTokens[i] = whitelistedERC1155.at(i);
+            }
+        } else {
+            // Default return for unsupported token types
+            allTokens = new address[](0);
+        }
+    }
+
     // Get the list of tokens in the blacklist
     function getBlacklistedTokens(TokenType tokenType, uint256 offset, uint256 limit)
     external view override returns (address[] memory tokens) {
