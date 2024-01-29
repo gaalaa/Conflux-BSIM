@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
 
-interface ITokenListManager {
+pragma solidity ^0.8.20;
 
     // Enum to distinguish between different token types
     enum TokenType {
@@ -9,6 +8,8 @@ interface ITokenListManager {
         ERC721,
         ERC1155
     }
+
+interface ITokenListManager {
 
     // Add tokens to tokenlist(whitelist), batch supported
     function addTokens(address[] calldata tokens) external;
