@@ -7,5 +7,3 @@ This repo contains two contracts, TokenListManager and Wallet, which are logical
 
 **Wallet:** This contract provides functions related to user wallets, such as obtaining paginated token information, checking which tokens the user owns, obtaining a list of token addresses, etc. It relies on the TokenListManager contract to obtain the token addresses in the whitelist, and queries and returns the token information held by the user based on these addresses.
 
-# License
-Conflux-BSIM Contracts is released under the MIT License.
