@@ -1,7 +1,7 @@
 # Conflux-BSIM
 This repo contains two contracts, TokenListManager and Wallet, which are logical contracts used to implement ITokenListManager and Iwallet respectively.
 # Overview:
-*1. Solidity Version: 0.8.20*
+*Solidity Version: 0.8.20*
 
 **TokenListManager:** This contract is responsible for managing the whitelist and blacklist of ERC20, ERC721, and ERC1155 tokens. It allows users with the TOKEN_MANAGER_ROLE role to add or remove specific token addresses. Use EnumerableSet to manage address collections and use ERC165Checker to detect whether the token supports a specific interface.
 
